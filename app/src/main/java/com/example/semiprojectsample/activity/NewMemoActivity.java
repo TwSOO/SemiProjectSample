@@ -13,9 +13,15 @@ import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 import com.example.semiprojectsample.R;
+import com.example.semiprojectsample.bean.MemberBean;
+import com.example.semiprojectsample.bean.MemoBean;
+import com.example.semiprojectsample.db.FileDB;
 import com.example.semiprojectsample.fragment.FragmentCamera;
 import com.example.semiprojectsample.fragment.FragmentMemoWrite;
 import com.google.android.material.tabs.TabLayout;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class NewMemoActivity extends AppCompatActivity {
 
@@ -36,7 +42,7 @@ public class NewMemoActivity extends AppCompatActivity {
 
         //탭생성
         mTabLayout.addTab(mTabLayout.newTab().setText("메모"));
-        mTabLayout.addTab(mTabLayout.newTab().setText("회원정보"));
+        mTabLayout.addTab(mTabLayout.newTab().setText("사진찍기"));
         mTabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 
         //ViewPager 생성
@@ -86,6 +92,25 @@ public class NewMemoActivity extends AppCompatActivity {
         EditText edtWriteMemo = f0.getView().findViewById(R.id.edtWriteMemo);
         String memoStr = edtWriteMemo.getText().toString();
         String photoPath = f1.mPhotoPath;
+
+        if(memoStr == null){
+            Toast.makeText(this, "메모 내용을 입력해주세요", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if(photoPath == null){
+            Toast.makeText(this, "사진을 등록해주세요.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // 로그인한 멤버 획득
+        MemberBean memberBean = FileDB.getLoginMember(NewMemoActivity.this);
+
+        // 저장할 메모 생성
+        MemoBean  memoBean = new MemoBean();
+        memoBean.memo = memoStr;
+        memoBean.memoPicPath = photoPath;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd");
+        memoBean.memoDate = sdf.format(new Date());
 
         Log.e("SEMI", "memoStr: " + memoStr + ", photoPath: " + photoPath);
         Toast.makeText(this, "memoStr: " + memoStr + ", photoPath: " + photoPath, Toast.LENGTH_LONG).show();

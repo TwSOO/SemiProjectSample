@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.text.TextUtils;
 
 import com.example.semiprojectsample.bean.MemberBean;
+import com.example.semiprojectsample.bean.MemoBean;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -88,6 +89,23 @@ public class FileDB {
     }
 
     // 이 함수를 이용하여 이미 존재하는 회원인지 확인하기
+
+    // 로그인한 MemberBean의 메모저장하기
+    public static void saveMemo(Context context, MemoBean memo){
+        MemberBean loginMember = getLoginMember(context);
+        if(loginMember.memoList == null){
+            loginMember.memoList = new ArrayList<>();
+        }
+        loginMember.memoList.add(0, memo);
+
+        // 현재 로그인한 멤버 업데이트 하기
+        setLoginMember(context, loginMember);
+
+        // 디비에 업데이트 하기
+
+
+    }
+
 
 } // end Class
 
