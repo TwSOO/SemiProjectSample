@@ -38,6 +38,29 @@ public class FileDB {
 
     }
 
+    // 기존 멤버 교체
+    public static void setMember(Context context, MemberBean memberBean){
+        // 전체 멤버 리스트를 취득한다.
+        List<MemberBean> memberList = getMemberList(context);
+        if(memberList.size() == 0) return;
+
+        for(int i = 0; i < memberList.size();  i++){ // for Each : for(MemberBean bean: memberlsit) list들 돌면서 Member만 가지고 오는 것임
+            MemberBean bean = memberList.get(i);
+            if(TextUtils.equals(bean.memId, memberBean.memId)){
+                // 같은 멤버ID를 찾았다.
+                memberList.set(i, memberBean);
+                break;
+            }
+        }
+
+        // 새롭게 업데이트된 리스트를 저장한다.
+        String jsonStr = mGson.toJson(memberList);
+        // 멤버 리스트를 저장한다.
+        SharedPreferences.Editor editor = getSP(context).edit();
+        editor.putString("memberList", jsonStr); // 키값 조심하기!! 키값 일치시켜야함.
+        editor.commit();
+    }
+
     // memberList 가져오기
     public static List<MemberBean> getMemberList(Context context){
         String listStr = getSP(context).getString("memberList", null);
@@ -88,25 +111,71 @@ public class FileDB {
         return memberBean;
     }
 
+
+
     // 이 함수를 이용하여 이미 존재하는 회원인지 확인하기
 
-    // 로그인한 MemberBean의 메모저장하기
-    public static void saveMemo(Context context, MemoBean memo){
-        MemberBean loginMember = getLoginMember(context);
-        if(loginMember.memoList == null){
-            loginMember.memoList = new ArrayList<>();
+    // 메모를 추가하는 메소드
+    public static void addMemo(Context context, String memId, MemoBean memoBean){
+        MemberBean findMember= getFindMember(context, memId);
+
+        if(findMember == null) return;
+
+        List<MemoBean> memoList = findMember.memoList;
+
+        if(memoList == null){
+            memoList = new ArrayList<>();
         }
-        loginMember.memoList.add(0, memo);
 
-        // 현재 로그인한 멤버 업데이트 하기
-        setLoginMember(context, loginMember);
+        // 고유 메모 ID를 생성해준다.
+        memoBean.memoId = memoList.size()+1;
+        memoList.add(memoBean);
+        findMember.memoList = memoList;
 
-        // 디비에 업데이트 하기
+        // 저장
+        setMember(context, findMember);
 
 
+
+
+    } // addMemo
+
+    // 기존 메모 교체
+    public static void setMemo(Context context, String memId, MemoBean memoBean){
+
+            // 전체 메모 리스트를 취득한다.
+            MemberBean memberBean = getFindMember(context, memId);
+            if(memberBean.memoList.size() == 0) return;
+
+            for(int i = 0; i < memberBean.memoList.size();  i++){ // for Each : for(MemberBean bean: memberlsit) list들 돌면서 Member만 가지고 오는 것임
+                MemoBean bean = memberBean.memoList.get(i);
+                if(bean.memoId == memoBean.memoId){
+                    // 같은 멤버ID를 찾았다.
+                    memberBean.memoList.set(i, memoBean);
+                    break;
+                }
+            }
     }
 
+    // 메모 삭제
+    public static void delMemo(Context context, String memId, int memoId){
+         MemberBean memberBean = getFindMember(context, memId);
+         if(memberBean.memoList == null) return;
+         memberBean.memoList.remove(memoId-1);
+    }
 
+    // 메모 리스트 취득
+    public static List<MemoBean> getMemoList(Context context, String memId){
+        MemberBean memberBean = getFindMember(context, memId);
+        if(memberBean == null) return null;
+        if(memberBean.memoList == null) {
+            return new ArrayList<>();
+        }else{
+            return memberBean.memoList;
+        }
+    }
+
+    // findMemo 메모를 수정했을 때 메모가 몇번재 있는지
 } // end Class
 
 /*

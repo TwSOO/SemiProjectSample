@@ -103,7 +103,7 @@ public class NewMemoActivity extends AppCompatActivity {
         }
 
         // 로그인한 멤버 획득
-        MemberBean memberBean = FileDB.getLoginMember(NewMemoActivity.this);
+        MemberBean loginMember = FileDB.getLoginMember(NewMemoActivity.this);
 
         // 저장할 메모 생성
         MemoBean  memoBean = new MemoBean();
@@ -111,6 +111,9 @@ public class NewMemoActivity extends AppCompatActivity {
         memoBean.memoPicPath = photoPath;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd");
         memoBean.memoDate = sdf.format(new Date());
+
+        // 메모 저장
+        FileDB.addMemo(NewMemoActivity.this, loginMember.memId, memoBean);
 
         Log.e("SEMI", "memoStr: " + memoStr + ", photoPath: " + photoPath);
         Toast.makeText(this, "memoStr: " + memoStr + ", photoPath: " + photoPath, Toast.LENGTH_LONG).show();
