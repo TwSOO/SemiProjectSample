@@ -3,9 +3,11 @@ package com.example.semiprojectsample.fragment;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
@@ -18,6 +20,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.semiprojectsample.R;
+import com.example.semiprojectsample.activity.ModifyMemoActivity;
 import com.example.semiprojectsample.activity.NewMemoActivity;
 import com.example.semiprojectsample.bean.MemberBean;
 import com.example.semiprojectsample.bean.MemoBean;
@@ -26,7 +29,8 @@ import com.example.semiprojectsample.db.FileDB;
 import java.util.List;
 
 public class FragmentMemo extends Fragment {
-    private static int NewMemoActivity = 1001;
+    private static int NEW_MEMO = 1001;
+    private static int MODIFY_MEMO = 1002;
     // 리스트뷰
     public ListView mLstMemo;
 
@@ -40,37 +44,36 @@ public class FragmentMemo extends Fragment {
         View view = inflater.inflate(R.layout.fragment_memo, container, false);
 
         mLstMemo = view.findViewById(R.id.lstMemo);
-        view.findViewById(R.id.btnNewMemo).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.btnNewMemo).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
                 //새메모 화면으로 이동
                 Intent i = new Intent(getActivity(), NewMemoActivity.class);
 
-                startActivityForResult(i,NewMemoActivity);
+                startActivityForResult(i,NEW_MEMO);
             }
         });
 
-        // 로그인 사용자의 메모리스트 획득
-        List<MemoBean> memoList = FileDB.getLoginMember(getActivity()).memoList;
-
-        // Adapter 생성 및 적용
-        adapter = new ListAdapter(memoList, getActivity());
-        // 리스트뷰에 Adapter 설정
-        mLstMemo.setAdapter(adapter);
 
         return view;
     } // end onCreateView
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+    public void onResume() {
+        super.onResume();
 
-        if(requestCode == NewMemoActivity){ // 리스트 갱신
-            List<MemoBean> =
+        MemberBean memberBean = FileDB.getLoginMember(getActivity());
+        // 로그인 사용자의 메모리스트 획득
+        List<MemoBean> memoList = FileDB.getMemoList(getActivity(), memberBean.memId);
+        // Adapter 생성 및 적용
+        adapter = new ListAdapter(memoList, getActivity());
+        // 리스트뷰에 Adapter 설정
+        mLstMemo.setAdapter(adapter);
 
-
-        }
     }
+
+
+
 
     // 어댑터
     class ListAdapter extends BaseAdapter{
@@ -85,6 +88,8 @@ public class FragmentMemo extends Fragment {
             this.memoList = memoList;
         }
 
+
+
         // Constructor
         public ListAdapter(List<MemoBean> memoList, Context context){
             this.memoList = memoList;
@@ -94,6 +99,7 @@ public class FragmentMemo extends Fragment {
         }
         @Override
         public int getCount() {
+            if(memoList == null) return 0;
             return memoList.size();
         }
 
@@ -108,30 +114,65 @@ public class FragmentMemo extends Fragment {
         }
 
         @Override
-        public View getView(int i, View view, ViewGroup viewGroup) {
+        public View getView(final int i, View view, ViewGroup viewGroup) {
             //memo_item.xml획득
             view = inflater.inflate(R.layout.memo_item, null); // 조그만한 ui(뷰)를 만들어서 view에 담음
 
             // xml파일을 맵핑함
+            ImageView imgvMemoPhoto = view.findViewById(R.id.imgvMemoPhoto);
             TextView txtvMemo = view.findViewById(R.id.txtvMemo);
             TextView txtvDate = view.findViewById(R.id.txtvDate);
             Button btnEdit = view.findViewById(R.id.btnEdit);
             Button btnErase = view.findViewById(R.id.btnErase);
-            Button btnEraswe = view.findViewById(R.id.btnDetail);
+            Button btnDetail = view.findViewById(R.id.btnDetail);
 
             // 원본에서 poistion번째 item획득
             final MemoBean memoBean = memoList.get(i);
 
             // 원본에서 데이터를 UI에 적용
+            imgvMemoPhoto.setImageURI(Uri.parse(memoBean.memoPicPath));
             txtvMemo.setText(memoBean.memo);
             txtvDate.setText(memoBean.memoDate);
 
-            // 수정 버튼
+            // 수정 버튼 리스너 셋
+            btnEdit.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View view) {
+                    startModifyMemoActivity(getActivity(), i);
+                }
+            });
+            // 삭제 버튼 리스너 셋
+            btnErase.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    MemberBean loginMember = FileDB.getLoginMember(getActivity());
+                    MemoBean memoBean = loginMember.memoList.get(i);
+                    FileDB.delMemo(getActivity(), loginMember.memId, memoBean.memoId);
 
-            // 삭제 버튼
+                    List<MemoBean> memoList = FileDB.getMemoList(getActivity(), loginMember.memId); // 디비에서 메모리스트 새로 가져오기
+                    setMemoList(memoList); // 어댑터안의 데이터 변경시키기
+                    notifyDataSetChanged();// 어댑터에게 데이터 변경되었음을 알려주어 화면 바꾸도록 하기
+                }
+            });
 
-            // 상세보기 버튼
+            // 상세보기 버튼 리스너 셋
+            btnDetail.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View view) {
+                    startModifyMemoActivity(getActivity(), i);
+                }
+            });
+
             return view;
-        }
+        } // getView
+
+        private void startModifyMemoActivity(Context context, int i){
+            Intent intent = new Intent(context, ModifyMemoActivity.class);
+            List<MemoBean> memoList = FileDB.getLoginMember(getActivity()).memoList;
+            MemoBean memoBean = memoList.get(i);
+            intent.putExtra("memoId", memoBean.memoId);
+            startActivityForResult(intent, MODIFY_MEMO);
+    } // startModifyMemoActivity()
+
     } // end ListAdatper
 } // end class

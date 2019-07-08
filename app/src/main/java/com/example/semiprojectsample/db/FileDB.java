@@ -9,7 +9,6 @@ import com.example.semiprojectsample.bean.MemoBean;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import java.lang.reflect.Member;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -128,8 +127,8 @@ public class FileDB {
         }
 
         // 고유 메모 ID를 생성해준다.
-        memoBean.memoId = memoList.size()+1;
-        memoList.add(memoBean);
+        memoBean.memoId = System.currentTimeMillis(); // 현재 이 메소드가 호출되는 시점의 시간
+        memoList.add(0, memoBean);
         findMember.memoList = memoList;
 
         // 저장
@@ -152,16 +151,32 @@ public class FileDB {
                 if(bean.memoId == memoBean.memoId){
                     // 같은 멤버ID를 찾았다.
                     memberBean.memoList.set(i, memoBean);
+                    setMember(context, memberBean);
                     break;
                 }
             }
     }
 
     // 메모 삭제
-    public static void delMemo(Context context, String memId, int memoId){
+    public static void delMemo(Context context, String memId, long memoId){
          MemberBean memberBean = getFindMember(context, memId);
          if(memberBean.memoList == null) return;
-         memberBean.memoList.remove(memoId-1);
+
+        for(int i=0; i < memberBean.memoList.size(); i++){
+            MemoBean bean = memberBean.memoList.get(i);
+
+            if( bean.memoId == memoId){
+                // 메모삭제
+                memberBean.memoList.remove(i);
+                break;
+            }
+        }
+
+        // 멤버 업데이트
+        setMember(context, memberBean);
+
+
+
     }
 
     // 메모 리스트 취득
@@ -175,7 +190,21 @@ public class FileDB {
         }
     }
 
-    // findMemo 메모를 수정했을 때 메모가 몇번재 있는지
+    //  (메모를 수정할 때) 메모 획득
+    public static MemoBean findMemo(Context context, String memId, long memoId) {
+        MemberBean memberBean = getFindMember(context, memId);
+        List<MemoBean> memoList = memberBean.memoList;
+
+        for (int i = 0; i < memoList.size(); i++) {
+            MemoBean bean = memoList.get(i);
+            if (bean.memoId == memoId) {
+                return bean;
+            }
+        }
+        return null;
+    }
+
+
 } // end Class
 
 /*

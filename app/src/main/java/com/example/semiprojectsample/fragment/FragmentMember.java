@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -32,6 +33,12 @@ public class FragmentMember extends Fragment {
         TextView txtMemDate = view.findViewById(R.id.txtMemDate);
         TextView txtMemPw = view.findViewById(R.id.txtMemPw);
 
+        view.findViewById(R.id.btnLogout).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getActivity().finish();
+            }
+        });
         // 파일DB에서 가져온다.
         MemberBean memberBean = FileDB.getLoginMember(getActivity());
 
@@ -40,6 +47,8 @@ public class FragmentMember extends Fragment {
         txtMemName.setText( memberBean.memName );
         txtMemPw.setText(memberBean.memPw);
         txtMemDate.setText(memberBean.memRegDate);
+
+
 
         return view;
     }

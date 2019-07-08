@@ -61,7 +61,7 @@ public class NewMemoActivity extends AppCompatActivity {
             @Override
             public void onTabReselected(TabLayout.Tab tab) { }
         });
-    }
+    } // onCreate
 
     private View.OnClickListener mBtnClick = new View.OnClickListener() {
         @Override
@@ -112,11 +112,15 @@ public class NewMemoActivity extends AppCompatActivity {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd");
         memoBean.memoDate = sdf.format(new Date());
 
+
         // 메모 저장
         FileDB.addMemo(NewMemoActivity.this, loginMember.memId, memoBean);
 
+
         Log.e("SEMI", "memoStr: " + memoStr + ", photoPath: " + photoPath);
         Toast.makeText(this, "memoStr: " + memoStr + ", photoPath: " + photoPath, Toast.LENGTH_LONG).show();
+
+        finish();
 
         //TODO 파일DB 에 저장처리
 
