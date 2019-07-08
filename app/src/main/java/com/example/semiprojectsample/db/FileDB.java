@@ -174,9 +174,6 @@ public class FileDB {
 
         // 멤버 업데이트
         setMember(context, memberBean);
-
-
-
     }
 
     // 메모 리스트 취득

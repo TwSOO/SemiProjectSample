@@ -40,7 +40,6 @@ public class FragmentModifyWrite extends Fragment {
             mEdtWriteMemo.setText(memoBean.memo);
         }
 
-
         return view;
     }
 }

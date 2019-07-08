@@ -78,7 +78,6 @@ public class FragmentMemo extends Fragment {
     // 어댑터
     class ListAdapter extends BaseAdapter{
 
-
         List<MemoBean> memoList;
         Context mContext;
         LayoutInflater inflater;
@@ -87,8 +86,6 @@ public class FragmentMemo extends Fragment {
         public void setMemoList(List<MemoBean> memoList) {
             this.memoList = memoList;
         }
-
-
 
         // Constructor
         public ListAdapter(List<MemoBean> memoList, Context context){
@@ -138,7 +135,8 @@ public class FragmentMemo extends Fragment {
             btnEdit.setOnClickListener(new View.OnClickListener(){
                 @Override
                 public void onClick(View view) {
-                    startModifyMemoActivity(getActivity(), i);
+
+                    startModifyMemoActivity(getActivity(),memoBean.memoId);
                 }
             });
             // 삭제 버튼 리스너 셋
@@ -146,7 +144,6 @@ public class FragmentMemo extends Fragment {
                 @Override
                 public void onClick(View view) {
                     MemberBean loginMember = FileDB.getLoginMember(getActivity());
-                    MemoBean memoBean = loginMember.memoList.get(i);
                     FileDB.delMemo(getActivity(), loginMember.memId, memoBean.memoId);
 
                     List<MemoBean> memoList = FileDB.getMemoList(getActivity(), loginMember.memId); // 디비에서 메모리스트 새로 가져오기
@@ -159,19 +156,17 @@ public class FragmentMemo extends Fragment {
             btnDetail.setOnClickListener(new View.OnClickListener(){
                 @Override
                 public void onClick(View view) {
-                    startModifyMemoActivity(getActivity(), i);
+                    startModifyMemoActivity(getActivity(), memoBean.memoId);
                 }
             });
 
             return view;
         } // getView
 
-        private void startModifyMemoActivity(Context context, int i){
+        private void startModifyMemoActivity(Context context, long memoId){
             Intent intent = new Intent(context, ModifyMemoActivity.class);
-            List<MemoBean> memoList = FileDB.getLoginMember(getActivity()).memoList;
-            MemoBean memoBean = memoList.get(i);
-            intent.putExtra("memoId", memoBean.memoId);
-            startActivityForResult(intent, MODIFY_MEMO);
+            intent.putExtra("memoId", memoId);
+            startActivity(intent);
     } // startModifyMemoActivity()
 
     } // end ListAdatper
