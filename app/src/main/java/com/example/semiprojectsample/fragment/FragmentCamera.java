@@ -9,8 +9,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-
 public class FragmentCamera extends Fragment {
+
+    //사진이 저장된 단말기상의 실제 경로
+    public String mPhotoPath = "/sdcard/hello/world.jpg"; //dummy data
 
     @Nullable
     @Override
