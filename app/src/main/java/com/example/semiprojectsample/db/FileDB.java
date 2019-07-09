@@ -107,7 +107,8 @@ public class FileDB {
         String str = getSP(context).getString("loginMemberBean", null);
         if(str == null) return null;
         MemberBean memberBean = mGson.fromJson(str, MemberBean.class);
-        return memberBean;
+        return getFindMember(context, memberBean.memId);
+
     }
 
 
