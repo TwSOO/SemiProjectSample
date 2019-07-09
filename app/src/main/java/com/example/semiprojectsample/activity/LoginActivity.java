@@ -67,4 +67,11 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(intent);
         }
     };
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mEdtId.setText("");
+        mEdtPw.setText("");
+    }
 }// class

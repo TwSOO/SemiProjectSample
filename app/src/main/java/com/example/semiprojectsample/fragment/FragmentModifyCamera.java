@@ -2,6 +2,7 @@ package com.example.semiprojectsample.fragment;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -32,6 +33,10 @@ import com.example.semiprojectsample.bean.MemoBean;
 import com.example.semiprojectsample.db.FileDB;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -72,11 +77,8 @@ public class FragmentModifyCamera extends Fragment {
 
             // 기존 메모 사진 보여주기
             mPhotoPath= memoBean.memoPicPath;
-            mImgProfile.setImageURI(Uri.parse(mPhotoPath));
-
+            mImgProfile.setImageURI(Uri.fromFile(new File(mPhotoPath)));
         }
-
-
 
         Button btnCamera = view.findViewById(R.id.btnCamera);
         //사진찍기 버튼
@@ -89,6 +91,7 @@ public class FragmentModifyCamera extends Fragment {
 
         return view;
     } // onCreate
+
     private void takePicture() {
 
         Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -154,7 +157,37 @@ public class FragmentModifyCamera extends Fragment {
         mImgProfile.setImageBitmap( rotatedBmp );
 
         Toast.makeText(getActivity(), "사진경로" + mPhotoPath,Toast.LENGTH_LONG).show(); // 우리는 사진의 경로를 저장하므로 사진의 경로를 확인함
-    }
+    } // sendPicture
+
+    private void saveBitmapToFileCache(Bitmap bitmap, String strFilePath) {
+
+        File fileCacheItem = new File(strFilePath);
+        OutputStream out = null;
+
+        try
+        {
+            fileCacheItem.createNewFile();
+            out = new FileOutputStream(fileCacheItem);
+
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        finally
+        {
+            try
+            {
+                out.close();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+    } // saveBitmapToFileCache
+
 
     private int exifOrientToDegree(int exifOrientation) {
         if(exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {
@@ -184,12 +217,33 @@ public class FragmentModifyCamera extends Fragment {
         return resized;
     }
 
-    public static Bitmap getResizedBitmap(Resources resources, int id, int size, int width, int height){
+    private Bitmap resize(Context context, Uri uri, int resize){
+        Bitmap resizeBitmap=null;
+
         BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = size;
-        Bitmap src = BitmapFactory.decodeResource(resources, id, options);
-        Bitmap resized = Bitmap.createScaledBitmap(src, width, height, true);
-        return resized;
+        try {
+            BitmapFactory.decodeStream(context.getContentResolver().openInputStream(uri), null, options); // 1번
+
+            int width = options.outWidth;
+            int height = options.outHeight;
+            int samplesize = 1;
+
+            while (true) {//2번
+                if (width / 2 < resize || height / 2 < resize)
+                    break;
+                width /= 2;
+                height /= 2;
+                samplesize *= 2;
+            }
+
+            options.inSampleSize = samplesize;
+            Bitmap bitmap = BitmapFactory.decodeStream(context.getContentResolver().openInputStream(uri), null, options); //3번
+            resizeBitmap=bitmap;
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return resizeBitmap;
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {

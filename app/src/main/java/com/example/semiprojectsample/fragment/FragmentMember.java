@@ -1,5 +1,9 @@
 package com.example.semiprojectsample.fragment;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -41,8 +45,10 @@ public class FragmentMember extends Fragment {
         });
         // 파일DB에서 가져온다.
         MemberBean memberBean = FileDB.getLoginMember(getActivity());
-
-        imgProfile.setImageURI(Uri.fromFile(new File(memberBean.photoPath)));
+        Bitmap imgBitMap = BitmapFactory.decodeFile(memberBean.photoPath);
+        Bitmap rotatedBmp = roate(imgBitMap, 90);
+        imgProfile.setImageBitmap(rotatedBmp);
+        // imgProfile.setImageURI(Uri.fromFile(new File(memberBean.photoPath)));
         txtMemId.setText( memberBean.memId );
         txtMemName.setText( memberBean.memName );
         txtMemPw.setText(memberBean.memPw);
@@ -52,4 +58,13 @@ public class FragmentMember extends Fragment {
 
         return view;
     }
+
+    private Bitmap roate(Bitmap bmp, float degree) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degree);
+        return Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(),
+                matrix, true);
+    }
+
+
 }

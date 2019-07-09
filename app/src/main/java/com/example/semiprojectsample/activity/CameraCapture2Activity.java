@@ -28,6 +28,9 @@ import com.example.semiprojectsample.bean.MemberBean;
 import com.example.semiprojectsample.db.FileDB;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -194,9 +197,41 @@ public class CameraCapture2Activity extends AppCompatActivity {
         }
         Bitmap rotatedBmp = roate(resizedBmp, exifDegree);
         mImgProfile.setImageBitmap( rotatedBmp );
+        // 줄어든 이미지를 다시 저장한다.
+        saveBitmapToFileCache(resizedBmp, mPhotoPath);
 
         Toast.makeText(this, "사진경로" + mPhotoPath,Toast.LENGTH_LONG).show(); // 우리는 사진의 경로를 저장하므로 사진의 경로를 확인함
-    }
+    }  // end Sendpicture
+
+    private void saveBitmapToFileCache(Bitmap bitmap, String strFilePath) {
+
+        File fileCacheItem = new File(strFilePath);
+        OutputStream out = null;
+
+        try
+        {
+            fileCacheItem.createNewFile();
+            out = new FileOutputStream(fileCacheItem);
+
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        finally
+        {
+            try
+            {
+                out.close();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+    } //  saveBitmapToFileCache
+
 
     private int exifOrientToDegree(int exifOrientation) {
         if(exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {

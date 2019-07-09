@@ -29,17 +29,23 @@
 
         <Button
             android:id="@+id/btnModify"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="수정" />
 
         <Button
             android:id="@+id/btnDelete"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="삭제" />
+        <Button
+            android:id="@+id/btnTts"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="음성으로 듣기"/>
     </LinearLayout>
 
 

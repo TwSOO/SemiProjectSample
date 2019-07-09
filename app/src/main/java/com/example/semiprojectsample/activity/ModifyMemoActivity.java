@@ -8,8 +8,10 @@ import androidx.viewpager.widget.ViewPager;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -26,12 +28,15 @@ import com.google.android.material.tabs.TabLayout;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
-public class ModifyMemoActivity extends AppCompatActivity {
+public class ModifyMemoActivity extends AppCompatActivity implements TextToSpeech.OnInitListener{ // TextToSpeech의 리스너를 임플리먼트함
     private TabLayout mTabLayout;
     private ViewPager mViewPager;
     private ViewPagerAdapter mViewPagerAdapter;
     String memoId; // 클릭한 메모 아이디
+    private TextToSpeech textToSpeech; // tts객체
+    private Button mBtnTts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,9 +45,13 @@ public class ModifyMemoActivity extends AppCompatActivity {
 
         mTabLayout = findViewById(R.id.tabLayout);
         mViewPager = findViewById(R.id.viewPager);
+        textToSpeech = new TextToSpeech(this, this);  // TTS객체 생성
 
         findViewById(R.id.btnModify).setOnClickListener(mBtnClick);
         findViewById(R.id.btnDelete).setOnClickListener(mBtnClick);
+        mBtnTts = findViewById(R.id.btnTts);
+        mBtnTts.setOnClickListener(mBtnClick);
+        mBtnTts.setEnabled(false);
 
         //탭생성
         mTabLayout.addTab(mTabLayout.newTab().setText("메모"));
@@ -65,7 +74,7 @@ public class ModifyMemoActivity extends AppCompatActivity {
             @Override
             public void onTabReselected(TabLayout.Tab tab) { }
         });
-    }
+    } // onCreate
 
     private View.OnClickListener mBtnClick = new View.OnClickListener() {
         @Override
@@ -81,9 +90,14 @@ public class ModifyMemoActivity extends AppCompatActivity {
                     //처리
                     deleteProc();
                     break;
+                case R.id.btnTts:
+                    //처리
+                    ttsProc();
             }
         }
     };
+
+
 
     //수정버튼 처리
     private void saveProc() {
@@ -149,7 +163,33 @@ public class ModifyMemoActivity extends AppCompatActivity {
 
     } // end deleteProc
 
-      class ViewPagerAdapter extends FragmentPagerAdapter {
+    // 음성으로 듣기 버튼 처리
+    private void ttsProc(){
+        //1.첫번째 프래그먼트의 EditText 값을 받아온다.
+        FragmentModifyWrite f0 = (FragmentModifyWrite)mViewPagerAdapter.instantiateItem(mViewPager,0);
+        EditText edtWriteMemo = f0.getView().findViewById(R.id.edtWriteMemo);
+        String memoStr = edtWriteMemo.getText().toString();
+
+        textToSpeech.speak(memoStr, TextToSpeech.QUEUE_FLUSH, null, null);
+
+    } // end ttsProc
+
+    // TTS 객체 생성할 때 onInit메소드 호출해서 TTS를 사용할 수 있는지 검사함
+    @Override
+    public void onInit(int i) {
+        if(i == TextToSpeech.SUCCESS) {// TTS 사용 가능 상태
+            int result = textToSpeech.setLanguage(Locale.ENGLISH); // 언어 기본 설정 = 영어
+
+            if (result == TextToSpeech.LANG_MISSING_DATA ||
+                    result == TextToSpeech.LANG_NOT_SUPPORTED){// TTS를 사용할 수 없는 상황이면
+                Log.e("ModifyMemoActivity", "지원하지 않는 언어 입니다."); // 에러메시지 뿌림
+            } else{
+                mBtnTts.setEnabled(true); // 버튼을 누를 수 있도록 함
+            }
+        }
+    } // end onInit
+
+    class ViewPagerAdapter extends FragmentPagerAdapter {
         private int tabCount;
 
         public ViewPagerAdapter(FragmentManager fm, int count) {
@@ -171,5 +211,16 @@ public class ModifyMemoActivity extends AppCompatActivity {
         public int getCount() {
             return tabCount;
         }
-    }
-}
+    } // end ViewPagerAdapter
+
+    // 액티비티 종료될 때 TextToSpeech 객체 해제하기
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(textToSpeech != null){
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+        }
+    } // end onDestroy
+} // end class

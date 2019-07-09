@@ -1,8 +1,15 @@
 package com.example.semiprojectsample.fragment;
 
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -127,7 +134,32 @@ public class FragmentMemo extends Fragment {
             final MemoBean memoBean = memoList.get(i);
 
             // 원본에서 데이터를 UI에 적용
-            imgvMemoPhoto.setImageURI(Uri.parse(memoBean.memoPicPath));
+            ///////////////////////////////////////////////////////
+            Bitmap bitmap = BitmapFactory.decodeFile(memoBean.memoPicPath);
+            Bitmap resizedBmp = getResizedBitmap(bitmap, 4, 100, 100); // 비트맵 이미지는 4분의 1 사이즈로 줄임
+
+            bitmap.recycle();
+
+            //사진이 캡쳐되서 들어오면 뒤집어져 있다. 이애를 다시 원상복구 시킨다.
+            ExifInterface exif = null;
+            try {
+                exif = new ExifInterface(memoBean.memoPicPath);
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+            int exifOrientation;
+            int exifDegree;
+            if(exif != null) {
+                exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                        ExifInterface.ORIENTATION_NORMAL);
+                exifDegree = exifOrientToDegree(exifOrientation);
+            } else {
+                exifDegree = 0;
+            }
+            Bitmap rotatedBmp = roate(resizedBmp, exifDegree);
+            imgvMemoPhoto.setImageBitmap( rotatedBmp );
+            ///////////////////////////////////////////////////////
+            //imgvMemoPhoto.setImageURI(Uri.parse(memoBean.memoPicPath));
             txtvMemo.setText(memoBean.memo);
             txtvDate.setText(memoBean.memoDate);
 
@@ -143,13 +175,29 @@ public class FragmentMemo extends Fragment {
             btnErase.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    MemberBean loginMember = FileDB.getLoginMember(getActivity());
-                    FileDB.delMemo(getActivity(), loginMember.memId, memoBean.memoId);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                    builder.setTitle("주의!");
+                    builder.setMessage("삭제하시겠습니까?");
+                    builder.setPositiveButton("네", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            MemberBean loginMember = FileDB.getLoginMember(getActivity());
+                            FileDB.delMemo(getActivity(), loginMember.memId, memoBean.memoId);
 
-                    List<MemoBean> memoList = FileDB.getMemoList(getActivity(), loginMember.memId); // 디비에서 메모리스트 새로 가져오기
-                    setMemoList(memoList); // 어댑터안의 데이터 변경시키기
-                    notifyDataSetChanged();// 어댑터에게 데이터 변경되었음을 알려주어 화면 바꾸도록 하기
-                }
+                            List<MemoBean> memoList = FileDB.getMemoList(getActivity(), loginMember.memId); // 디비에서 메모리스트 새로 가져오기
+                            setMemoList(memoList); // 어댑터안의 데이터 변경시키기
+                            notifyDataSetChanged();// 어댑터에게 데이터 변경되었음을 알려주어 화면 바꾸도록 하기
+                        }
+                    }); // 예 눌렀을 때
+                builder.setNegativeButton("아니오", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                    }
+                });
+                builder.show(); // 다이얼로그 표시
+
+                } // onClick
             });
 
             // 상세보기 버튼 리스너 셋
@@ -169,5 +217,32 @@ public class FragmentMemo extends Fragment {
             startActivity(intent);
     } // startModifyMemoActivity()
 
+        //비트맵의 사이즈를 줄여준다.
+        public  Bitmap getResizedBitmap(Bitmap srcBmp, int size, int width, int height){
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inSampleSize = size;
+            Bitmap resized = Bitmap.createScaledBitmap(srcBmp, width, height, true);
+            return resized;
+        }
+
+        private int exifOrientToDegree(int exifOrientation) {
+            if(exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {
+                return 90;
+            }
+            else if(exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {
+                return 180;
+            }
+            else if(exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {
+                return 270;
+            }
+            return 0;
+        }
+
+        private Bitmap roate(Bitmap bmp, float degree) {
+            Matrix matrix = new Matrix();
+            matrix.postRotate(degree);
+            return Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(),
+                    matrix, true);
+        }
     } // end ListAdatper
 } // end class
